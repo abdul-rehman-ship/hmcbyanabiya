@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
-  title: 'Sweet Cakes | Premium Cake Shop',
+  title: 'HMC by Anabiya',
   description: 'Delicious cakes for every occasion',
 };
 
