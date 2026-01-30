@@ -158,7 +158,7 @@ export default function AdminPage() {
               </Card>
             </Col>
 
-            <Col md={6}>
+            {/* <Col md={6}>
               <Card className="border-0 shadow-lg h-100" style={{ backgroundColor: 'var(--card-bg)' }}>
                 <Card.Body className="p-4">
                   <div className="d-flex align-items-center mb-3">
@@ -184,7 +184,7 @@ export default function AdminPage() {
                   </Button>
                 </Card.Body>
               </Card>
-            </Col>
+            </Col> */}
 
             {/* Quick Actions */}
             <Col md={12}>

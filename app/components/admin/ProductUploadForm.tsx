@@ -235,7 +235,7 @@ export default function ProductUploadForm() {
                 />
               </Form.Group>
 
-              <Form.Group className="mb-4">
+              {/* <Form.Group className="mb-4">
                 <Form.Check
                   type="checkbox"
                   id="featured-check"
@@ -244,7 +244,7 @@ export default function ProductUploadForm() {
                   onChange={(e) => setFormData({...formData, featured: e.target.checked})}
                   className="text-white"
                 />
-              </Form.Group>
+              </Form.Group> */}
             </div>
           </div>
 
