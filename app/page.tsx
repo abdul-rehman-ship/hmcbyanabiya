@@ -5,22 +5,25 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { getAllCakes } from './utils/firebaseUtils';
 
 export default async function Home() {
+  // This will get ALL cakes from Firebase
   const cakes = await getAllCakes();
+  
+  
 
   return (
     <>
       <NavigationBar />
       <Banner />
       
-      {/* Products Section */}
+      {/* Products Section - Shows ALL cakes */}
       <section className="py-5">
         <Container className="py-5">
           <div className="text-center mb-5">
             <h2 className="display-5 fw-bold mb-3 text-custom-primary">
-              Our Premium Cakes
+              All Our Cakes ({cakes.length})
             </h2>
             <p className="lead mb-4 text-custom-secondary" style={{ maxWidth: '600px', margin: '0 auto' }}>
-              Handcrafted with love using the finest ingredients
+              Browse our complete collection of delicious cakes
             </p>
           </div>
           
@@ -35,7 +38,7 @@ export default async function Home() {
           ) : (
             <div className="text-center py-5">
               <div className="glass-effect rounded p-5" style={{ maxWidth: '500px', margin: '0 auto' }}>
-                <p className="text-custom-muted mb-0">No cakes available yet. Check back soon!</p>
+                <p className="text-custom-muted mb-0">No cakes available yet. Add some from the admin panel!</p>
               </div>
             </div>
           )}
