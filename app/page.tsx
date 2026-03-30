@@ -5,10 +5,16 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { getAllCakes } from './utils/firebaseUtils';
 
 export default async function Home() {
-  // This will get ALL cakes from Firebase
-  const cakes = await getAllCakes();
+  let cakes = [];
+  let error = null;
   
-  
+  try {
+    cakes = await getAllCakes();
+    console.log('Cakes count:', cakes.length); // Debug log
+  } catch (err) {
+    console.error('Error in Home page:', err);
+    error = err.message;
+  }
 
   return (
     <>
@@ -27,10 +33,16 @@ export default async function Home() {
             </p>
           </div>
           
-          {cakes.length > 0 ? (
+          {error && (
+            <div className="alert alert-danger text-center" role="alert">
+              Error loading cakes: {error}
+            </div>
+          )}
+          
+          {!error && cakes.length > 0 ? (
             <Row xs={1} md={2} lg={3} xl={4} className="g-4">
-              {cakes.map((cake) => (
-                <Col key={cake.id}>
+              {cakes.map((cake, index) => (
+                <Col key={cake.id || index}>
                   <CakeCard cake={cake} />
                 </Col>
               ))}
@@ -38,7 +50,9 @@ export default async function Home() {
           ) : (
             <div className="text-center py-5">
               <div className="glass-effect rounded p-5" style={{ maxWidth: '500px', margin: '0 auto' }}>
-                <p className="text-custom-muted mb-0">No cakes available yet. Add some from the admin panel!</p>
+                <p className="text-custom-muted mb-0">
+                  {error ? 'Error loading cakes. Please try again.' : 'No cakes available yet. Add some from the admin panel!'}
+                </p>
               </div>
             </div>
           )}
