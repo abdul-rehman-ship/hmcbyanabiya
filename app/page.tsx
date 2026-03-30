@@ -5,13 +5,13 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { getAllCakes } from './utils/firebaseUtils';
 
 export default async function Home() {
-  let cakes:any = [];
-  let error:any = null;
+  let cakes: any[] = [];
+  let error: any = null;
   
   try {
     cakes = await getAllCakes();
     console.log('Cakes count:', cakes.length); // Debug log
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error in Home page:', err);
     error = err.message;
   }
@@ -41,7 +41,7 @@ export default async function Home() {
           
           {!error && cakes.length > 0 ? (
             <Row xs={1} md={2} lg={3} xl={4} className="g-4">
-              {cakes.map((cake, index) => (
+              {cakes.map((cake: any, index: number) => (
                 <Col key={cake.id || index}>
                   <CakeCard cake={cake} />
                 </Col>
