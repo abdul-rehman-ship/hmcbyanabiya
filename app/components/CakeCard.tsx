@@ -56,7 +56,7 @@ export default function CakeCard({ cake }: CakeCardProps) {
             color: '#fff'
           }}
         >
-          ${cake.price}
+          pkr {cake.price}
         </div>
       </div>
       
@@ -77,7 +77,7 @@ export default function CakeCard({ cake }: CakeCardProps) {
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div className="d-flex align-items-center">
               <span className="text-primary me-2">📏</span>
-              <span className="small text-white">{cake.size.split('(')[0]}</span>
+              <span className="small text-white">{cake.size}</span>
             </div>
             <div className="d-flex align-items-center">
               <span className="text-primary me-2">🎂</span>
