@@ -8,7 +8,7 @@ import { addCake } from '../../utils/firebaseUtils';
 import toast from 'react-hot-toast';
 
 const categories = ['Birthday', 'Wedding', 'Anniversary', 'Custom', 'Special', 'Cupcakes'];
-const sizes = ['Small (Serves 10-15)', 'Medium (Serves 20-25)', 'Large (Serves 30-40)', 'X-Large (Serves 50+)'];
+const sizes = ['Small (Half pound - 1 pound, Serves 2-3 )', 'Standard (1 pound - 2 pound, Serves 3-5)', 'Medium (2 pound - 4 pound, Serves 5-8)', 'Large (Above 4 pound, Serves 10-14)'];
 
 export default function ProductUploadForm() {
   const [formData, setFormData] = useState({
@@ -149,7 +149,7 @@ export default function ProductUploadForm() {
 
               <Form.Group className="mb-4">
                 <Form.Label className="text-white mb-2">
-                  Price ($) <span className="text-danger">*</span>
+                  Price (pkr) <span className="text-danger">*</span>
                 </Form.Label>
                 <Form.Control
                   type="number"
