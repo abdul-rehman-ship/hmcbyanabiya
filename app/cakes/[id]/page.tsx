@@ -172,7 +172,7 @@ export default function CakeDetailPage() {
                   <span className="h2 fw-bold text-primary">pkr {cake.price}</span>
                   <span className="px-3 py-1 rounded-pill text-custom-light"
                     style={{ backgroundColor: 'rgba(236, 72, 153, 0.1)' }}>
-                    {cake.size]}
+                    {cake.size}
                   </span>
                 </div>
               </div>
