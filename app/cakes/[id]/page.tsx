@@ -169,10 +169,10 @@ export default function CakeDetailPage() {
                 </div>
                 <h1 className="h1 fw-bold mb-3 text-custom-primary">{cake.name}</h1>
                 <div className="d-flex align-items-center gap-4 mb-4">
-                  <span className="h2 fw-bold text-primary">${cake.price}</span>
+                  <span className="h2 fw-bold text-primary">pkr {cake.price}</span>
                   <span className="px-3 py-1 rounded-pill text-custom-light"
                     style={{ backgroundColor: 'rgba(236, 72, 153, 0.1)' }}>
-                    {cake.size.split('(')[0]}
+                    {cake.size]}
                   </span>
                 </div>
               </div>
