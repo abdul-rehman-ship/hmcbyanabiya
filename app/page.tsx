@@ -5,8 +5,8 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { getAllCakes } from './utils/firebaseUtils';
 
 export default async function Home() {
-  let cakes = [];
-  let error = null;
+  let cakes:any = [];
+  let error:any = null;
   
   try {
     cakes = await getAllCakes();
