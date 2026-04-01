@@ -1,20 +1,33 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import NavigationBar from './components/Navbar';
 import Banner from './components/Banner';
 import CakeCard from './components/CakeCard';
 import { Container, Row, Col } from 'react-bootstrap';
 import { getAllCakes } from './utils/firebaseUtils';
 
-export default async function Home() {
-  let cakes: any[] = [];
-  let error: any = null;
-  
-  try {
-    cakes = await getAllCakes();
-    console.log('Cakes count:', cakes.length); // Debug log
-  } catch (err: any) {
-    console.error('Error in Home page:', err);
-    error = err.message;
-  }
+export default function Home() {
+  const [cakes, setCakes] = useState<any[]>([]);
+  const [error, setError] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCakes() {
+      try {
+        const cakesData = await getAllCakes();
+        setCakes(cakesData);
+        console.log('Cakes count:', cakesData.length);
+      } catch (err: any) {
+        console.error('Error in Home page:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCakes();
+  }, []);
 
   return (
     <>
@@ -39,7 +52,13 @@ export default async function Home() {
             </div>
           )}
           
-          {!error && cakes.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-5">
+              <div className="glass-effect rounded p-5" style={{ maxWidth: '500px', margin: '0 auto' }}>
+                <p className="text-custom-muted mb-0">Loading cakes...</p>
+              </div>
+            </div>
+          ) : !error && cakes.length > 0 ? (
             <Row xs={1} md={2} lg={3} xl={4} className="g-4">
               {cakes.map((cake: any, index: number) => (
                 <Col key={cake.id || index}>
