@@ -72,3 +72,14 @@ export const uploadMultipleImages = async (files) => {
   // Your existing upload logic
   // ...
 };
+
+export const verifyAdminKey = (key: string): boolean => {
+  // You should store this in environment variables
+  const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY || 'admin123  ';
+  
+  // Simple comparison
+  return key === ADMIN_KEY;
+  
+  // For more security, you might want to use a hash comparison:
+  // return hash(key) === storedHash;
+};
