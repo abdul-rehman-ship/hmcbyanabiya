@@ -1,263 +1,194 @@
+// components/admin/ProductList.jsx
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Table, Button, Badge, Modal, Form } from 'react-bootstrap';
-import { BsEye, BsPencil, BsTrash, BsSearch, BsFilter } from 'react-icons/bs';
-import { getAllCakes, deleteCake, CakeProduct } from '../../utils/firebaseUtils';
-import { getOptimizedImageUrl } from '../../utils/cloudinaryUtils';
+import { Card, Button, Badge, Container, Row, Col } from 'react-bootstrap';
+import { BsPencil, BsTrash, BsStar, BsStarFill } from 'react-icons/bs';
+import { getAllCakes, deleteCake, updateCakeFeatured } from '../../utils/firebaseUtils';
+import EditProductModal from './EditProductModal';
 import toast from 'react-hot-toast';
 
 export default function ProductList() {
-  const [cakes, setCakes] = useState<CakeProduct[]>([]);
-  const [filteredCakes, setFilteredCakes] = useState<CakeProduct[]>([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [cakeToDelete, setCakeToDelete] = useState<CakeProduct | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
-    loadCakes();
+    loadProducts();
   }, []);
 
-  useEffect(() => {
-    filterCakes();
-  }, [cakes, searchTerm]);
-
-  const loadCakes = async () => {
+  const loadProducts = async () => {
     try {
-      const cakesData = await getAllCakes();
-      setCakes(cakesData);
-      setFilteredCakes(cakesData);
+      setLoading(true);
+      const cakes = await getAllCakes();
+      setProducts(cakes);
     } catch (error) {
-      console.error('Error loading cakes:', error);
+      console.error('Error loading products:', error);
       toast.error('Failed to load products');
     } finally {
       setLoading(false);
     }
   };
 
-  const filterCakes = () => {
-    if (!searchTerm.trim()) {
-      setFilteredCakes(cakes);
-      return;
+  const handleDelete = async (productId) => {
+    if (window.confirm('Are you sure you want to delete this cake?')) {
+      try {
+        const result = await deleteCake(productId);
+        if (result) {
+          toast.success('Cake deleted successfully');
+          loadProducts(); // Refresh the list
+        } else {
+          toast.error('Failed to delete cake');
+        }
+      } catch (error) {
+        console.error('Error deleting cake:', error);
+        toast.error('Error deleting cake');
+      }
     }
-
-    const filtered = cakes.filter(cake =>
-      cake.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cake.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cake.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    setFilteredCakes(filtered);
   };
 
-  const handleDelete = async () => {
-    if (!cakeToDelete) return;
+  const handleEdit = (product) => {
+    setSelectedProduct(product);
+    setShowEditModal(true);
+  };
 
+  const handleToggleFeatured = async (product) => {
     try {
-      const success = await deleteCake(cakeToDelete.id);
-      if (success) {
-        toast.success(`"${cakeToDelete.name}" deleted successfully`);
-        loadCakes();
+      const result = await updateCakeFeatured(product.id, !product.featured);
+      if (result) {
+        toast.success(`Cake ${!product.featured ? 'marked as featured' : 'removed from featured'}`);
+        loadProducts(); // Refresh the list
       } else {
-        toast.error('Failed to delete product');
+        toast.error('Failed to update featured status');
       }
     } catch (error) {
-      toast.error('Error deleting product');
-    } finally {
-      setShowDeleteModal(false);
-      setCakeToDelete(null);
+      console.error('Error updating featured status:', error);
+      toast.error('Error updating featured status');
     }
   };
 
-  const confirmDelete = (cake: CakeProduct) => {
-    setCakeToDelete(cake);
-    setShowDeleteModal(true);
-  };
+  if (loading) {
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <Card className="border-0 shadow-lg" style={{ backgroundColor: 'var(--card-bg)' }}>
+        <Card.Body className="text-center py-5">
+          <h5 className="text-white mb-3">No Products Yet</h5>
+          <p className="text-gray-400">Start by adding your first cake product.</p>
+        </Card.Body>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="border-0 shadow-lg" style={{ backgroundColor: 'var(--card-bg)' }}>
-      <Card.Body className="p-4">
-        {/* Header */}
+    <>
+      <div>
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h4 className="fw-bold text-white mb-1">
-              All Products
-            </h4>
-            <p className="text-gray-400 mb-0">
-              {cakes.length} total cakes
-            </p>
-          </div>
+          <h4 className="text-white mb-0">Manage Products</h4>
+          <Badge bg="primary" className="px-3 py-2">
+            Total: {products.length} cakes
+          </Badge>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-4">
-          <div className="input-group">
-            <span className="input-group-text bg-transparent border-secondary">
-              <BsSearch className="text-gray-400" />
-            </span>
-            <Form.Control
-              type="text"
-              placeholder="Search cakes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border-0"
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                color: '#fff'
-              }}
-            />
-          </div>
-        </div>
+        <Row className="g-4">
+          {products.map((product) => (
+            <Col key={product.id} md={6} lg={4}>
+              <Card className="border-0 shadow-lg h-100" style={{ backgroundColor: 'var(--card-bg)' }}>
+                <div className="position-relative">
+                  <Card.Img
+                    variant="top"
+                    src={product.images?.[0] || '/placeholder-cake.jpg'}
+                    style={{ height: '200px', objectFit: 'cover' }}
+                  />
+                  {product.featured && (
+                    <Badge
+                      className="position-absolute top-0 end-0 m-3"
+                      style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
+                    >
+                      <BsStarFill className="me-1" size={12} />
+                      Featured
+                    </Badge>
+                  )}
+                </div>
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <h5 className="text-white mb-0">{product.name}</h5>
+                    <Badge bg="info" className="ms-2">
+                      {product.category}
+                    </Badge>
+                  </div>
+                  <p className="text-gray-400 small mb-2">{product.size}</p>
+                  <p className="text-white mb-3">
+                    <strong>Rs. {product.price.toLocaleString()}</strong>
+                  </p>
+                  <p className="text-gray-400 small mb-3">
+                    {product.description.length > 100 
+                      ? `${product.description.substring(0, 100)}...` 
+                      : product.description}
+                  </p>
+                  <div className="d-flex gap-2">
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      onClick={() => handleEdit(product)}
+                      className="flex-grow-1"
+                      style={{
+                        borderColor: '#ec4899',
+                        color: '#ec4899'
+                      }}
+                    >
+                      <BsPencil className="me-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleDelete(product.id)}
+                      className="flex-grow-1"
+                    >
+                      <BsTrash className="me-1" />
+                      Delete
+                    </Button>
+                    <Button
+                      variant={product.featured ? "warning" : "outline-warning"}
+                      size="sm"
+                      onClick={() => handleToggleFeatured(product)}
+                      className="flex-grow-1"
+                      style={{
+                        ...(product.featured && { backgroundColor: '#f59e0b', borderColor: '#f59e0b' })
+                      }}
+                    >
+                      {product.featured ? <BsStarFill /> : <BsStar />}
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </div>
 
-        {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="text-gray-400 mt-3">Loading products...</p>
-          </div>
-        ) : filteredCakes.length > 0 ? (
-          <div className="table-responsive">
-            <Table hover className="align-middle mb-0" style={{ color: '#fff' }}>
-              <thead>
-                <tr style={{ borderColor: '#475569' }}>
-                  <th style={{ borderColor: '#475569' }}>Product</th>
-                  <th style={{ borderColor: '#475569' }}>Category</th>
-                  <th style={{ borderColor: '#475569' }}>Price</th>
-                  <th style={{ borderColor: '#475569' }}>Size</th>
-                  <th style={{ borderColor: '#475569' }}>Status</th>
-                  <th style={{ borderColor: '#475569' }} className="text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCakes.map((cake) => (
-                  <tr key={cake.id} style={{ borderColor: '#475569' }}>
-                    <td style={{ borderColor: '#475569' }}>
-                      <div className="d-flex align-items-center">
-                        <img
-                          src={getOptimizedImageUrl(cake.images[0], 100)}
-                          alt={cake.name}
-                          className="rounded me-3"
-                          style={{ width: '60px', height: '60px', objectFit: 'cover' }}
-                        />
-                        <div>
-                          <div className="fw-medium text-white">{cake.name}</div>
-                          <div className="text-gray-400 small" style={{ fontSize: '0.85rem' }}>
-                            {cake.description.substring(0, 50)}...
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ borderColor: '#475569' }}>
-                      <Badge bg="secondary" className="px-3 py-2">
-                        {cake.category}
-                      </Badge>
-                    </td>
-                    <td style={{ borderColor: '#475569' }}>
-                      <div className="fw-bold text-primary"> pkr {cake.price}</div>
-                    </td>
-                    <td style={{ borderColor: '#475569' }}>
-                      <span className="text-gray-300">{cake.size.split('(')[0]}</span>
-                    </td>
-                    <td style={{ borderColor: '#475569' }}>
-                      {cake.featured ? (
-                        <Badge bg="success" className="px-3 py-2">
-                          Featured
-                        </Badge>
-                      ) : (
-                        <Badge bg="secondary" className="px-3 py-2">
-                          Regular
-                        </Badge>
-                      )}
-                    </td>
-                    <td style={{ borderColor: '#475569' }} className="text-end">
-                      <div className="d-flex justify-content-end gap-2">
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
-                          href={`/cakes/${cake.id}`}
-                          target="_blank"
-                          className="d-flex align-items-center"
-                        >
-                          <BsEye className="me-1" />
-                          View
-                        </Button>
-                        <Button
-                          variant="outline-warning"
-                          size="sm"
-                          onClick={() => toast('Edit feature coming soon!')}
-                          className="d-flex align-items-center"
-                        >
-                          <BsPencil className="me-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={() => confirmDelete(cake)}
-                          className="d-flex align-items-center"
-                        >
-                          <BsTrash className="me-1" />
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-        ) : (
-          <div className="text-center py-5">
-            <div className="p-5 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>
-              <BsSearch size={48} className="text-gray-500 mb-3" />
-              <p className="text-gray-400 mb-0">
-                {searchTerm ? 'No cakes found matching your search' : 'No cakes available yet'}
-              </p>
-            </div>
-          </div>
-        )}
-      </Card.Body>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
-        centered
-        backdrop="static"
-      >
-        <Modal.Header closeButton className="border-0" style={{ backgroundColor: 'var(--card-bg)' }}>
-          <Modal.Title className="text-white">Confirm Delete</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ backgroundColor: 'var(--card-bg)' }}>
-          <p className="text-gray-300">
-            Are you sure you want to delete "{cakeToDelete?.name}"? This action cannot be undone.
-          </p>
-          {cakeToDelete && (
-            <div className="d-flex align-items-center mt-4 p-3 rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-              <img
-                src={getOptimizedImageUrl(cakeToDelete.images[0], 100)}
-                alt={cakeToDelete.name}
-                className="rounded me-3"
-                style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-              />
-              <div>
-                <div className="text-white">{cakeToDelete.name}</div>
-                <div className="text-gray-400 small">${cakeToDelete.price} • {cakeToDelete.category}</div>
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer className="border-0" style={{ backgroundColor: 'var(--card-bg)' }}>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Delete Product
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Card>
+      {/* Edit Modal */}
+      {selectedProduct && (
+        <EditProductModal
+          show={showEditModal}
+          onHide={() => {
+            setShowEditModal(false);
+            setSelectedProduct(null);
+          }}
+          product={selectedProduct}
+          onProductUpdated={loadProducts}
+        />
+      )}
+    </>
   );
 }
