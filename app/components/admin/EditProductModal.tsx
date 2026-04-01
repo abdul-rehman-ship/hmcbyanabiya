@@ -1,4 +1,4 @@
-// components/admin/EditProductModal.jsx
+// components/admin/EditProductModal.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,11 +8,27 @@ import { uploadMultipleImages } from '../../utils/cloudinaryUtils';
 import { updateCake } from '../../utils/firebaseUtils';
 import toast from 'react-hot-toast';
 
-const categories = ['Birthday', 'Wedding', 'Anniversary', 'Custom', 'Special', 'Cupcakes'];
-const sizes = ['Small (Half pound - 1 pound, Serves 2-3 )', 'Standard (1 pound - 2 pound, Serves 3-5)', 'Medium (2 pound - 4 pound, Serves 5-8)', 'Large (Above 4 pound, Serves 10-14)'];
+const categories: string[] = ['Birthday', 'Wedding', 'Anniversary', 'Custom', 'Special', 'Cupcakes'];
+const sizes: string[] = ['Small (Half pound - 1 pound, Serves 2-3 )', 'Standard (1 pound - 2 pound, Serves 3-5)', 'Medium (2 pound - 4 pound, Serves 5-8)', 'Large (Above 4 pound, Serves 10-14)'];
 
-export default function EditProductModal({ show, onHide, product, onProductUpdated }) {
-  const [formData, setFormData] = useState({
+interface EditProductModalProps {
+  show: boolean;
+  onHide: () => void;
+  product: any;
+  onProductUpdated: () => void;
+}
+
+interface FormData {
+  name: string;
+  price: string;
+  size: string;
+  description: string;
+  category: string;
+  featured: boolean;
+}
+
+export default function EditProductModal({ show, onHide, product, onProductUpdated }: EditProductModalProps) {
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     price: '',
     size: sizes[0],
@@ -20,11 +36,11 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
     category: categories[0],
     featured: false,
   });
-  const [existingImages, setExistingImages] = useState([]);
-  const [newImages, setNewImages] = useState([]);
-  const [newImagePreviews, setNewImagePreviews] = useState([]);
-  const [uploading, setUploading] = useState(false);
-  const [removedImages, setRemovedImages] = useState([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [removedImages, setRemovedImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (product) {
@@ -43,7 +59,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
     }
   }, [product]);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const newImagesList = [...newImages, ...files];
     setNewImages(newImagesList);
@@ -52,21 +68,21 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
     setNewImagePreviews(newPreviews);
   };
 
-  const removeExistingImage = (index) => {
+  const removeExistingImage = (index: number) => {
     const removed = existingImages[index];
     setRemovedImages([...removedImages, removed]);
     const newExistingImages = existingImages.filter((_, i) => i !== index);
     setExistingImages(newExistingImages);
   };
 
-  const removeNewImage = (index) => {
+  const removeNewImage = (index: number) => {
     const newImagesList = newImages.filter((_, i) => i !== index);
     const newPreviews = newImagePreviews.filter((_, i) => i !== index);
     setNewImages(newImagesList);
     setNewImagePreviews(newPreviews);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
@@ -87,7 +103,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
     setUploading(true);
     
     try {
-      let updatedImageUrls = [...existingImages];
+      let updatedImageUrls: string[] = [...existingImages];
       
       // Upload new images if any
       if (newImages.length > 0) {
@@ -97,7 +113,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
       }
 
       // Prepare cake data
-      const cakeData = {
+      const cakeData: any = {
         name: formData.name,
         price: parseFloat(formData.price),
         size: formData.size,
@@ -147,7 +163,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
                 <Form.Control
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, name: e.target.value})}
                   placeholder="e.g., Chocolate Delight Cake"
                   className="py-3 text-white border-0"
                   style={{
@@ -168,7 +184,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
                   step="0.01"
                   min="0"
                   value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, price: e.target.value})}
                   placeholder="e.g., 29.99"
                   className="py-3 border-0"
                   style={{
@@ -186,7 +202,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
                 </Form.Label>
                 <Form.Select
                   value={formData.size}
-                  onChange={(e) => setFormData({...formData, size: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({...formData, size: e.target.value})}
                   className="py-3 border-0"
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -194,7 +210,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
                     borderRadius: '10px'
                   }}
                 >
-                  {sizes.map((size) => (
+                  {sizes.map((size: string) => (
                     <option key={size} value={size} style={{ backgroundColor: '#1e293b' }}>
                       {size}
                     </option>
@@ -211,7 +227,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
                 </Form.Label>
                 <Form.Select
                   value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({...formData, category: e.target.value})}
                   className="py-3 border-0"
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -219,7 +235,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
                     borderRadius: '10px'
                   }}
                 >
-                  {categories.map((category) => (
+                  {categories.map((category: string) => (
                     <option key={category} value={category} style={{ backgroundColor: '#1e293b' }}>
                       {category}
                     </option>
@@ -235,7 +251,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
                   as="textarea"
                   rows={4}
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({...formData, description: e.target.value})}
                   placeholder="Describe your cake..."
                   className="py-3 text-white border-0"
                   style={{
@@ -253,7 +269,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
                   id="featured-check"
                   label="Mark as Featured Product"
                   checked={formData.featured}
-                  onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, featured: e.target.checked})}
                   className="text-white"
                 />
               </Form.Group>
@@ -271,7 +287,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
               <div className="mb-4">
                 <p className="text-white mb-3">Current Images</p>
                 <div className="row g-2">
-                  {existingImages.map((image, index) => (
+                  {existingImages.map((image: string, index: number) => (
                     <div key={index} className="col-3">
                       <div className="position-relative">
                         <img
@@ -303,7 +319,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
                 border: '2px dashed #475569',
                 backgroundColor: 'rgba(255, 255, 255, 0.02)'
               }}
-              onClick={() => document.getElementById('edit-image-input').click()}
+              onClick={() => document.getElementById('edit-image-input')?.click()}
             >
               <input
                 type="file"
@@ -323,7 +339,7 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
               <div className="mt-4">
                 <p className="text-white mb-3">New Images ({newImages.length})</p>
                 <div className="row g-2">
-                  {newImagePreviews.map((preview, index) => (
+                  {newImagePreviews.map((preview: string, index: number) => (
                     <div key={index} className="col-3">
                       <div className="position-relative">
                         <img
