@@ -1,6 +1,6 @@
 
 
-import { db } from '../lib/firebase';
+import { database as db } from '../lib/firebase';
 import { 
   collection, 
   getDocs, 
