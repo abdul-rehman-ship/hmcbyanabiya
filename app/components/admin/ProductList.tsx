@@ -1,4 +1,4 @@
-// components/admin/ProductList.jsx
+// components/admin/ProductList.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,21 +8,33 @@ import { getAllCakes, deleteCake, updateCakeFeatured } from '../../utils/firebas
 import EditProductModal from './EditProductModal';
 import toast from 'react-hot-toast';
 
+// Define the Product type
+interface CakeProduct {
+  id: string;
+  name: string;
+  price: number;
+  size: string;
+  description: string;
+  images: string[];
+  category: string;
+  featured: boolean;
+}
+
 export default function ProductList() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [products, setProducts] = useState<CakeProduct[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedProduct, setSelectedProduct] = useState<CakeProduct | null>(null);
+  const [showEditModal, setShowEditModal] = useState<boolean>(false);
 
   useEffect(() => {
     loadProducts();
   }, []);
 
-  const loadProducts = async () => {
+  const loadProducts = async (): Promise<void> => {
     try {
       setLoading(true);
       const cakes = await getAllCakes();
-      setProducts(cakes);
+      setProducts(cakes as CakeProduct[]);
     } catch (error) {
       console.error('Error loading products:', error);
       toast.error('Failed to load products');
@@ -31,7 +43,7 @@ export default function ProductList() {
     }
   };
 
-  const handleDelete = async (productId) => {
+  const handleDelete = async (productId: string): Promise<void> => {
     if (window.confirm('Are you sure you want to delete this cake?')) {
       try {
         const result = await deleteCake(productId);
@@ -48,12 +60,12 @@ export default function ProductList() {
     }
   };
 
-  const handleEdit = (product) => {
+  const handleEdit = (product: CakeProduct): void => {
     setSelectedProduct(product);
     setShowEditModal(true);
   };
 
-  const handleToggleFeatured = async (product) => {
+  const handleToggleFeatured = async (product: CakeProduct): Promise<void> => {
     try {
       const result = await updateCakeFeatured(product.id, !product.featured);
       if (result) {
