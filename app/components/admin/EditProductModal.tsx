@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal, Form, Button, Badge } from 'react-bootstrap';
+import { Modal, Form, Button } from 'react-bootstrap';
 import { BsUpload, BsX, BsImage } from 'react-icons/bs';
 import { uploadMultipleImages } from '../../utils/cloudinaryUtils';
 import { updateCake } from '../../utils/firebaseUtils';
@@ -126,17 +126,14 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
 
       // Update in Firebase
       toast.loading('Updating cake details...');
-      const result = await updateCake(product.id, cakeData);
+      await updateCake(product.id, cakeData);
       
-      if (result) {
-        toast.dismiss();
-        toast.success('🎉 Cake updated successfully!');
-        onProductUpdated();
-        onHide();
-      } else {
-        toast.dismiss();
-        toast.error('Failed to update cake');
-      }
+      // If we reach here, update was successful
+      toast.dismiss();
+      toast.success('🎉 Cake updated successfully!');
+      onProductUpdated();
+      onHide();
+      
     } catch (error) {
       toast.dismiss();
       toast.error('Error updating cake');
@@ -317,7 +314,8 @@ export default function EditProductModal({ show, onHide, product, onProductUpdat
               className="border-dashed rounded-lg p-5 text-center cursor-pointer"
               style={{
                 border: '2px dashed #475569',
-                backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                cursor: 'pointer'
               }}
               onClick={() => document.getElementById('edit-image-input')?.click()}
             >
