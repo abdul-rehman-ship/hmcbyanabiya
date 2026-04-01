@@ -155,7 +155,7 @@ export default function ProductList() {
                       </Badge>
                     </td>
                     <td style={{ borderColor: '#475569' }}>
-                      <div className="fw-bold text-primary">${cake.price}</div>
+                      <div className="fw-bold text-primary"> pkr {cake.price}</div>
                     </td>
                     <td style={{ borderColor: '#475569' }}>
                       <span className="text-gray-300">{cake.size.split('(')[0]}</span>
