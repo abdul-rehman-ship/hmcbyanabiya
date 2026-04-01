@@ -6,7 +6,7 @@ export const generateWhatsAppMessage = (product: {
 }): string => {
   const message = `Hello! I want to order this cake:\n\n` +
     `🍰 *${product.name}*\n` +
-    `💰 Price: $${product.price}\n` +
+    `💰 Price: pkr ${product.price}\n` +
     `📏 Size: ${product.size}\n` +
     `📝 Description: ${product.description}\n\n` +
     `Please let me know about availability and delivery options.`;
