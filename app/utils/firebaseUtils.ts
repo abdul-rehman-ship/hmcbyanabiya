@@ -1,85 +1,129 @@
-// utils/firebaseUtils.js
-import { db, storage } from './firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy } from 'firebase/firestore';
-import { ref, deleteObject } from 'firebase/storage';
+// utils/firebaseUtils.ts
 
-// Add this function to your existing firebaseUtils.js
-export const updateCake = async (cakeId, cakeData) => {
+import { db } from './firebase'; // Your firebase config
+import { 
+  collection, 
+  getDocs, 
+  getDoc, 
+  doc, 
+  query, 
+  where, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc,
+  DocumentData,
+  DocumentSnapshot
+} from 'firebase/firestore';
+
+// Define the CakeProduct interface
+export interface CakeProduct {
+  id: string;
+  name: string;
+  price: number;
+  size: string;
+  category: string;
+  description: string;
+  images: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Get a single cake by ID
+export const getCakeById = async (id: string): Promise<CakeProduct | null> => {
   try {
-    const cakeRef = doc(db, 'cakes', cakeId);
+    const cakeDoc = await getDoc(doc(db, 'cakes', id));
     
-    // Remove removedImages from the data we send to Firestore
-    const { removedImages, ...updateData } = cakeData;
-    
-    await updateDoc(cakeRef, updateData);
-    
-    // If there are removed images, delete them from Cloudinary/Storage
-    // Note: You'll need to implement Cloudinary deletion logic here
-    if (removedImages && removedImages.length > 0) {
-      // Delete from Cloudinary (you'll need to implement this)
-      // For now, we just log it
-      console.log('Images to delete:', removedImages);
+    if (cakeDoc.exists()) {
+      return {
+        id: cakeDoc.id,
+        ...cakeDoc.data()
+      } as CakeProduct;
     }
     
-    return true;
+    return null;
+  } catch (error) {
+    console.error('Error getting cake by ID:', error);
+    throw error;
+  }
+};
+
+// Get all cakes
+export const getAllCakes = async (): Promise<CakeProduct[]> => {
+  try {
+    const cakesCollection = collection(db, 'cakes');
+    const cakeSnapshot = await getDocs(cakesCollection);
+    
+    return cakeSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as CakeProduct));
+  } catch (error) {
+    console.error('Error getting all cakes:', error);
+    throw error;
+  }
+};
+
+// Get cakes by category
+export const getCakesByCategory = async (category: string): Promise<CakeProduct[]> => {
+  try {
+    const cakesCollection = collection(db, 'cakes');
+    const q = query(cakesCollection, where('category', '==', category));
+    const cakeSnapshot = await getDocs(q);
+    
+    return cakeSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as CakeProduct));
+  } catch (error) {
+    console.error('Error getting cakes by category:', error);
+    throw error;
+  }
+};
+
+// Add a new cake
+export const addCake = async (cakeData: Omit<CakeProduct, 'id'>): Promise<string> => {
+  try {
+    const cakesCollection = collection(db, 'cakes');
+    const docRef = await addDoc(cakesCollection, {
+      ...cakeData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding cake:', error);
+    throw error;
+  }
+};
+
+// Update a cake
+export const updateCake = async (id: string, cakeData: Partial<CakeProduct>): Promise<void> => {
+  try {
+    const cakeDoc = doc(db, 'cakes', id);
+    await updateDoc(cakeDoc, {
+      ...cakeData,
+      updatedAt: new Date()
+    });
   } catch (error) {
     console.error('Error updating cake:', error);
-    return false;
+    throw error;
   }
 };
 
-export const updateCakeFeatured = async (cakeId, featured) => {
+// Delete a cake
+export const deleteCake = async (id: string): Promise<void> => {
   try {
-    const cakeRef = doc(db, 'cakes', cakeId);
-    await updateDoc(cakeRef, { featured });
-    return true;
-  } catch (error) {
-    console.error('Error updating featured status:', error);
-    return false;
-  }
-};
-
-// Update your deleteCake function to also delete images from Cloudinary if needed
-export const deleteCake = async (cakeId) => {
-  try {
-    const cakeRef = doc(db, 'cakes', cakeId);
-    await deleteDoc(cakeRef);
-    return true;
+    const cakeDoc = doc(db, 'cakes', id);
+    await deleteDoc(cakeDoc);
   } catch (error) {
     console.error('Error deleting cake:', error);
-    return false;
+    throw error;
   }
 };
 
-// Make sure getAllCakes is already in your file
-export const getAllCakes = async () => {
-  try {
-    const cakesQuery = query(collection(db, 'cakes'), orderBy('name'));
-    const querySnapshot = await getDocs(cakesQuery);
-    const cakes = [];
-    querySnapshot.forEach((doc) => {
-      cakes.push({ id: doc.id, ...doc.data() });
-    });
-    return cakes;
-  } catch (error) {
-    console.error('Error fetching cakes:', error);
-    return [];
-  }
-};
-
-// Add this function to upload multiple images (if you don't have it)
-export const uploadMultipleImages = async (files) => {
-  // Your existing upload logic
-  // ...
-};
-
+// Admin key verification (if you need it)
 export const verifyAdminKey = (key: string): boolean => {
-  // You should store this in environment variables
-  const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY || 'admin123  ';
-  
-  // Simple comparison
+  const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY || 'your-secure-admin-key';
   return key === ADMIN_KEY;
-  
-  // For more security, you might want to use a hash comparison:
-  // return hash(key) === storedHash;
 };
