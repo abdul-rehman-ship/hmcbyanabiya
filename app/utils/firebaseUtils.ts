@@ -1,18 +1,18 @@
-
-
-import { database as db } from '../lib/firebase';
+// utils/firebaseUtils.ts
+import { database } from '../lib/firebase';
 import { 
-  collection, 
-  getDocs, 
-  getDoc, 
-  doc, 
+  ref, 
+  get, 
+  set, 
+  update, 
+  remove, 
+  push, 
   query, 
-  where, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc,
-  orderBy
-} from 'firebase/firestore';
+  orderByChild, 
+  equalTo,
+  onValue,
+  off
+} from 'firebase/database';
 
 // Define the CakeProduct interface
 export interface CakeProduct {
@@ -24,21 +24,29 @@ export interface CakeProduct {
   description: string;
   images: string[];
   featured?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 // Get all cakes
 export const getAllCakes = async (): Promise<CakeProduct[]> => {
   try {
-    const cakesCollection = collection(db, 'cakes');
-    const q = query(cakesCollection, orderBy('createdAt', 'desc'));
-    const cakeSnapshot = await getDocs(q);
+    const cakesRef = ref(database, 'cakes');
+    const snapshot = await get(cakesRef);
     
-    return cakeSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as CakeProduct));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      // Convert object to array with ids
+      const cakes = Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      } as CakeProduct));
+      
+      // Sort by createdAt descending
+      return cakes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error getting all cakes:', error);
     throw error;
@@ -48,12 +56,13 @@ export const getAllCakes = async (): Promise<CakeProduct[]> => {
 // Get a single cake by ID
 export const getCakeById = async (id: string): Promise<CakeProduct | null> => {
   try {
-    const cakeDoc = await getDoc(doc(db, 'cakes', id));
+    const cakeRef = ref(database, `cakes/${id}`);
+    const snapshot = await get(cakeRef);
     
-    if (cakeDoc.exists()) {
+    if (snapshot.exists()) {
       return {
-        id: cakeDoc.id,
-        ...cakeDoc.data()
+        id: id,
+        ...snapshot.val()
       } as CakeProduct;
     }
     
@@ -67,14 +76,22 @@ export const getCakeById = async (id: string): Promise<CakeProduct | null> => {
 // Get cakes by category
 export const getCakesByCategory = async (category: string): Promise<CakeProduct[]> => {
   try {
-    const cakesCollection = collection(db, 'cakes');
-    const q = query(cakesCollection, where('category', '==', category));
-    const cakeSnapshot = await getDocs(q);
+    const cakesRef = ref(database, 'cakes');
+    const snapshot = await get(cakesRef);
     
-    return cakeSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as CakeProduct));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const cakes = Object.keys(data)
+        .filter(key => data[key].category === category)
+        .map(key => ({
+          id: key,
+          ...data[key]
+        } as CakeProduct));
+      
+      return cakes;
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error getting cakes by category:', error);
     throw error;
@@ -84,14 +101,17 @@ export const getCakesByCategory = async (category: string): Promise<CakeProduct[
 // Add a new cake
 export const addCake = async (cakeData: Omit<CakeProduct, 'id'>): Promise<string> => {
   try {
-    const cakesCollection = collection(db, 'cakes');
-    const docRef = await addDoc(cakesCollection, {
+    const cakesRef = ref(database, 'cakes');
+    const newCakeRef = push(cakesRef);
+    const cakeId = newCakeRef.key as string;
+    
+    await set(newCakeRef, {
       ...cakeData,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     });
     
-    return docRef.id;
+    return cakeId;
   } catch (error) {
     console.error('Error adding cake:', error);
     throw error;
@@ -101,11 +121,16 @@ export const addCake = async (cakeData: Omit<CakeProduct, 'id'>): Promise<string
 // Update a cake
 export const updateCake = async (id: string, cakeData: Partial<CakeProduct>): Promise<void> => {
   try {
-    const cakeDoc = doc(db, 'cakes', id);
-    await updateDoc(cakeDoc, {
+    const cakeRef = ref(database, `cakes/${id}`);
+    const updates: any = {
       ...cakeData,
-      updatedAt: new Date()
-    });
+      updatedAt: Date.now()
+    };
+    
+    // Remove id from updates if it exists
+    delete updates.id;
+    
+    await update(cakeRef, updates);
   } catch (error) {
     console.error('Error updating cake:', error);
     throw error;
@@ -115,10 +140,10 @@ export const updateCake = async (id: string, cakeData: Partial<CakeProduct>): Pr
 // Update cake featured status
 export const updateCakeFeatured = async (id: string, featured: boolean): Promise<void> => {
   try {
-    const cakeDoc = doc(db, 'cakes', id);
-    await updateDoc(cakeDoc, {
+    const cakeRef = ref(database, `cakes/${id}`);
+    await update(cakeRef, {
       featured: featured,
-      updatedAt: new Date()
+      updatedAt: Date.now()
     });
   } catch (error) {
     console.error('Error updating cake featured status:', error);
@@ -129,8 +154,8 @@ export const updateCakeFeatured = async (id: string, featured: boolean): Promise
 // Delete a cake
 export const deleteCake = async (id: string): Promise<void> => {
   try {
-    const cakeDoc = doc(db, 'cakes', id);
-    await deleteDoc(cakeDoc);
+    const cakeRef = ref(database, `cakes/${id}`);
+    await remove(cakeRef);
   } catch (error) {
     console.error('Error deleting cake:', error);
     throw error;
@@ -140,14 +165,22 @@ export const deleteCake = async (id: string): Promise<void> => {
 // Get featured cakes
 export const getFeaturedCakes = async (): Promise<CakeProduct[]> => {
   try {
-    const cakesCollection = collection(db, 'cakes');
-    const q = query(cakesCollection, where('featured', '==', true));
-    const cakeSnapshot = await getDocs(q);
+    const cakesRef = ref(database, 'cakes');
+    const snapshot = await get(cakesRef);
     
-    return cakeSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as CakeProduct));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const cakes = Object.keys(data)
+        .filter(key => data[key].featured === true)
+        .map(key => ({
+          id: key,
+          ...data[key]
+        } as CakeProduct));
+      
+      return cakes;
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error getting featured cakes:', error);
     throw error;
@@ -158,4 +191,31 @@ export const getFeaturedCakes = async (): Promise<CakeProduct[]> => {
 export const verifyAdminKey = (key: string): boolean => {
   const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY || 'your-secure-admin-key';
   return key === ADMIN_KEY;
+};
+
+// Real-time listener for cakes (if needed)
+export const subscribeToCakes = (
+  callback: (cakes: CakeProduct[]) => void,
+  onError?: (error: Error) => void
+) => {
+  const cakesRef = ref(database, 'cakes');
+  
+  const listener = onValue(cakesRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const cakes = Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      } as CakeProduct));
+      callback(cakes);
+    } else {
+      callback([]);
+    }
+  }, (error) => {
+    console.error('Error listening to cakes:', error);
+    if (onError) onError(error);
+  });
+  
+  // Return unsubscribe function
+  return () => off(cakesRef, 'value', listener);
 };
