@@ -46,13 +46,9 @@ export default function ProductList() {
   const handleDelete = async (productId: string): Promise<void> => {
     if (window.confirm('Are you sure you want to delete this cake?')) {
       try {
-        const result = await deleteCake(productId);
-        if (result) {
-          toast.success('Cake deleted successfully');
-          loadProducts(); // Refresh the list
-        } else {
-          toast.error('Failed to delete cake');
-        }
+        await deleteCake(productId);
+        toast.success('Cake deleted successfully');
+        loadProducts(); // Refresh the list
       } catch (error) {
         console.error('Error deleting cake:', error);
         toast.error('Error deleting cake');
@@ -67,13 +63,9 @@ export default function ProductList() {
 
   const handleToggleFeatured = async (product: CakeProduct): Promise<void> => {
     try {
-      const result = await updateCakeFeatured(product.id, !product.featured);
-      if (result) {
-        toast.success(`Cake ${!product.featured ? 'marked as featured' : 'removed from featured'}`);
-        loadProducts(); // Refresh the list
-      } else {
-        toast.error('Failed to update featured status');
-      }
+      await updateCakeFeatured(product.id, !product.featured);
+      toast.success(`Cake ${!product.featured ? 'marked as featured' : 'removed from featured'}`);
+      loadProducts(); // Refresh the list
     } catch (error) {
       console.error('Error updating featured status:', error);
       toast.error('Error updating featured status');
