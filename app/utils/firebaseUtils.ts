@@ -1,6 +1,6 @@
 // utils/firebaseUtils.ts
 
-import { db } from './firebase'; // Your firebase config
+import { db } from './firebase';
 import { 
   collection, 
   getDocs, 
@@ -11,8 +11,7 @@ import {
   addDoc, 
   updateDoc, 
   deleteDoc,
-  DocumentData,
-  DocumentSnapshot
+  orderBy
 } from 'firebase/firestore';
 
 // Define the CakeProduct interface
@@ -24,9 +23,27 @@ export interface CakeProduct {
   category: string;
   description: string;
   images: string[];
+  featured?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+// Get all cakes
+export const getAllCakes = async (): Promise<CakeProduct[]> => {
+  try {
+    const cakesCollection = collection(db, 'cakes');
+    const q = query(cakesCollection, orderBy('createdAt', 'desc'));
+    const cakeSnapshot = await getDocs(q);
+    
+    return cakeSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as CakeProduct));
+  } catch (error) {
+    console.error('Error getting all cakes:', error);
+    throw error;
+  }
+};
 
 // Get a single cake by ID
 export const getCakeById = async (id: string): Promise<CakeProduct | null> => {
@@ -43,22 +60,6 @@ export const getCakeById = async (id: string): Promise<CakeProduct | null> => {
     return null;
   } catch (error) {
     console.error('Error getting cake by ID:', error);
-    throw error;
-  }
-};
-
-// Get all cakes
-export const getAllCakes = async (): Promise<CakeProduct[]> => {
-  try {
-    const cakesCollection = collection(db, 'cakes');
-    const cakeSnapshot = await getDocs(cakesCollection);
-    
-    return cakeSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as CakeProduct));
-  } catch (error) {
-    console.error('Error getting all cakes:', error);
     throw error;
   }
 };
@@ -111,6 +112,20 @@ export const updateCake = async (id: string, cakeData: Partial<CakeProduct>): Pr
   }
 };
 
+// Update cake featured status
+export const updateCakeFeatured = async (id: string, featured: boolean): Promise<void> => {
+  try {
+    const cakeDoc = doc(db, 'cakes', id);
+    await updateDoc(cakeDoc, {
+      featured: featured,
+      updatedAt: new Date()
+    });
+  } catch (error) {
+    console.error('Error updating cake featured status:', error);
+    throw error;
+  }
+};
+
 // Delete a cake
 export const deleteCake = async (id: string): Promise<void> => {
   try {
@@ -122,7 +137,24 @@ export const deleteCake = async (id: string): Promise<void> => {
   }
 };
 
-// Admin key verification (if you need it)
+// Get featured cakes
+export const getFeaturedCakes = async (): Promise<CakeProduct[]> => {
+  try {
+    const cakesCollection = collection(db, 'cakes');
+    const q = query(cakesCollection, where('featured', '==', true));
+    const cakeSnapshot = await getDocs(q);
+    
+    return cakeSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as CakeProduct));
+  } catch (error) {
+    console.error('Error getting featured cakes:', error);
+    throw error;
+  }
+};
+
+// Admin key verification
 export const verifyAdminKey = (key: string): boolean => {
   const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY || 'your-secure-admin-key';
   return key === ADMIN_KEY;
